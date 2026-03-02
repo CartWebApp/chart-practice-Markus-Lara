@@ -1,10 +1,10 @@
 // change this to reference the dataset you chose to work with.
-import { bikeShare as chartData } from "./data/bikeShare.js";
+import { gameSales as chartData } from "./data/gameSales.js";
 
 // --- DOM helpers ---
-const monthSelect = document.getElementById("monthSelect");
-const hoodSelect = document.getElementById("hoodSelect");
-const metricSelect = document.getElementById("metricSelect");
+const yearSelect = document.getElementById("yearSelect");
+const titleSelect = document.getElementById("titleSelect");
+const metricSelect = document.getElementById("unitsSelect");
 const chartTypeSelect = document.getElementById("chartType");
 const renderBtn = document.getElementById("renderBtn");
 const dataPreview = document.getElementById("dataPreview");
@@ -13,14 +13,14 @@ const canvas = document.getElementById("chartCanvas");
 let currentChart = null;
 
 // --- Populate dropdowns from data ---
-const months = [...new Set(chartData.map(r => r.month))];
-const hoods = [...new Set(chartData.map(r => r.hood))];
+const year = [...new Set(chartData.map(r => r.year))];
+const title = [...new Set(chartData.map(r => r.title))];
 
-months.forEach(m => monthSelect.add(new Option(m, m)));
-hoods.forEach(h => hoodSelect.add(new Option(h, h)));
+year.forEach(m => yearSelect.add(new Option(m, m)));
+title.forEach(h => titleSelect.add(new Option(h, h)));
 
-monthSelect.value = months[0];
-hoodSelect.value = hoods[0];
+yearSelect.value = year[0]; 
+titleSelect.value = title[0];
 
 // Preview first 6 rows
 dataPreview.textContent = JSON.stringify(chartData.slice(0, 6), null, 2);
@@ -28,63 +28,66 @@ dataPreview.textContent = JSON.stringify(chartData.slice(0, 6), null, 2);
 // --- Main render ---
 renderBtn.addEventListener("click", () => {
   const chartType = chartTypeSelect.value;
-  const month = monthSelect.value;
-  const hood = hoodSelect.value;
+  const year = yearSelect.value;
+  const title = titleSelect.value;
   const metric = metricSelect.value;
 
   // Destroy old chart if it exists (common Chart.js gotcha)
   if (currentChart) currentChart.destroy();
 
   // Build chart config based on type
-  const config = buildConfig(chartType, { month, hood, metric });
+  const config = buildConfig(chartType, { year, title, metric });
 
   currentChart = new Chart(canvas, config);
 });
 
 // --- Students: you’ll edit / extend these functions ---
-function buildConfig(type, { month, hood, metric }) {
-  if (type === "bar") return barByNeighborhood(month, metric);
-  if (type === "line") return lineOverTime(hood, ["trips", "revenueUSD"]);
-  if (type === "scatter") return scatterTripsVsTemp(hood);
-  if (type === "doughnut") return doughnutMemberVsCasual(month, hood);
-  if (type === "radar") return radarCompareNeighborhoods(month);
-  return barByNeighborhood(month, metric);
+function buildConfig(type, { year, title, metric }) {
+  if (type === "bar") return barByPlatform(year, metric);
+  if (type === "line") return lineOverTime(title, ["genre", "revenueUSD"]);
+  if (type === "scatter") return scatterScoreVsSales(title);
+  if (type === "doughnut") return doughnutMemberVsCasual(year, title);
+  if (type === "radar") return radarCompareNeighbortitles(year);
+  return barByNeighbortitle(year, metric);
 }
 
-// Task A: BAR — compare neighborhoods for a given month
-function barByNeighborhood(month, metric) {
-  const rows = chartData.filter(r => r.month === month);
+// Task A: BAR — compare neighbortitles for a given year
+function barByPlatform(year, metric) {
+  console.log(year, metric)
+  const rows = chartData.filter(r => r.year === year);
 
-  const labels = rows.map(r => r.hood);
+  const labels = rows.map(r => r.title);
+  console.log(labels)
   const values = rows.map(r => r[metric]);
+  console.log (values)
 
   return {
     type: "bar",
     data: {
       labels,
       datasets: [{
-        label: `${metric} in ${month}`,
+        label: `${metric} in ${year}`,
         data: values
       }]
     },
     options: {
       responsive: true,
       plugins: {
-        title: { display: true, text: `Neighborhood comparison (${month})` }
+        title: { display: true, text: `Gamesales comparison (${year})` }
       },
       scales: {
         y: { title: { display: true, text: metric } },
-        x: { title: { display: true, text: "Neighborhood" } }
+        x: { title: { display: true, text: "Gamesales" } }
       }
     }
   };
 }
 
-// Task B: LINE — trend over time for one neighborhood (2 datasets)
-function lineOverTime(hood, metrics) {
-  const rows = chartData.filter(r => r.hood === hood);
+// Task B: LINE — trend over time for one neighbortitle (2 datasets)
+function lineOverTime(title, metrics) {
+  const rows = chartData.filter(r => r.title === title);
 
-  const labels = rows.map(r => r.month);
+  const labels = rows.map(r => r.year);
 
   const datasets = metrics.map(m => ({
     label: m,
@@ -97,19 +100,19 @@ function lineOverTime(hood, metrics) {
     options: {
       responsive: true,
       plugins: {
-        title: { display: true, text: `Trends over time: ${hood}` }
+        title: { display: true, text: `Trends over time: ${title}` }
       },
       scales: {
         y: { title: { display: true, text: "Value" } },
-        x: { title: { display: true, text: "Month" } }
+        x: { title: { display: true, text: "year" } }
       }
     }
   };
 }
 
 // SCATTER — relationship between temperature and trips
-function scatterTripsVsTemp(hood) {
-  const rows = chartData.filter(r => r.hood === hood);
+function scatterTripsVsTemp(title) {
+  const rows = chartData.filter(r => r.title === title);
 
   const points = rows.map(r => ({ x: r.tempC, y: r.trips }));
 
@@ -117,13 +120,13 @@ function scatterTripsVsTemp(hood) {
     type: "scatter",
     data: {
       datasets: [{
-        label: `Trips vs Temp (${hood})`,
+        label: `Trips vs Temp (${title})`,
         data: points
       }]
     },
     options: {
       plugins: {
-        title: { display: true, text: `Does temperature affect trips? (${hood})` }
+        title: { display: true, text: `Does temperature affect trips? (${title})` }
       },
       scales: {
         x: { title: { display: true, text: "Temperature (C)" } },
@@ -133,9 +136,9 @@ function scatterTripsVsTemp(hood) {
   };
 }
 
-// DOUGHNUT — member vs casual share for one hood + month
-function doughnutMemberVsCasual(month, hood) {
-  const row = chartData.find(r => r.month === month && r.hood === hood);
+// DOUGHNUT — member vs casual share for one title + year
+function doughnutMemberVsCasual(year, title) {
+  const row = chartData.find(r => r.year === year && r.title === title);
 
   const member = Math.round(row.memberShare * 100);
   const casual = 100 - member;
@@ -148,17 +151,17 @@ function doughnutMemberVsCasual(month, hood) {
     },
     options: {
       plugins: {
-        title: { display: true, text: `Rider mix: ${hood} (${month})` }
+        title: { display: true, text: `Rider mix: ${title} (${year})` }
       }
     }
   };
 }
 
-// RADAR — compare neighborhoods across multiple metrics for one month
-function radarCompareNeighborhoods(month) {
-  const rows = chartData.filter(r => r.month === month);
+// RADAR — compare neighborhoods across multiple metrics for one year
+function radarCompareNeighborhoods(year) {
+  const rows = chartData.filter(r => r.year === year);
 
-  const metrics = ["trips", "revenueUSD", "avgDurationMin", "incidents"];
+  const metrics = ["genres", "revenueUSD", "avgDurationMin", "incidents"];
   const labels = metrics;
 
   const datasets = rows.map(r => ({
@@ -171,7 +174,7 @@ function radarCompareNeighborhoods(month) {
     data: { labels, datasets },
     options: {
       plugins: {
-        title: { display: true, text: `Multi-metric comparison (${month})` }
+        title: { display: true, text: `Multi-metric comparison (${year})` }
       }
     }
   };
