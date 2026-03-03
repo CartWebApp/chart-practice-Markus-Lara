@@ -44,9 +44,9 @@ renderBtn.addEventListener("click", () => {
 // --- Students: you’ll edit / extend these functions ---
 function buildConfig(type, { year, title, metric }) {
   if (type === "bar") return barByPlatform(year, metric);
-  if (type === "line") return lineOverTime(title, ["genre", "revenueUSD"]);
+  if (type === "line") return lineOverTime(title, ["unitsM", "revenueUSD"]);
   if (type === "scatter") return scatterScoreVsSales(title);
-  if (type === "doughnut") return doughnutMemberVsCasual(year, title);
+  if (type === "doughnut") return doughnutRevenueByRegion(year, title);
   if (type === "radar") return radarCompareNeighbortitles(year);
   return barByNeighbortitle(year, metric);
 }
@@ -54,7 +54,7 @@ function buildConfig(type, { year, title, metric }) {
 // Task A: BAR — compare neighbortitles for a given year
 function barByPlatform(year, metric) {
   console.log(year, metric)
-  const rows = chartData.filter(r => r.year === year);
+  const rows = chartData.filter(r => r.year === Number(year));
 
   const labels = rows.map(r => r.title);
   console.log(labels)
@@ -85,7 +85,9 @@ function barByPlatform(year, metric) {
 
 // Task B: LINE — trend over time for one neighbortitle (2 datasets)
 function lineOverTime(title, metrics) {
-  const rows = chartData.filter(r => r.title === title);
+  const rows = chartData
+    .filter(r => r.title === title)
+    .sort((a, b) => a.year - b.year);
 
   const labels = rows.map(r => r.year);
 
@@ -104,11 +106,12 @@ function lineOverTime(title, metrics) {
       },
       scales: {
         y: { title: { display: true, text: "Value" } },
-        x: { title: { display: true, text: "year" } }
+        x: { title: { display: true, text: "Year" } }
       }
     }
   };
 }
+
 
 // SCATTER — relationship between temperature and trips
 function scatterTripsVsTemp(title) {
@@ -137,25 +140,31 @@ function scatterTripsVsTemp(title) {
 }
 
 // DOUGHNUT — member vs casual share for one title + year
-function doughnutMemberVsCasual(year, title) {
-  const row = chartData.find(r => r.year === year && r.title === title);
+function doughnutRevenueByRegion(year, title) {
+  const rows = chartData.filter(
+    r => r.year === Number(year) && r.title === title
+  );
 
-  const member = Math.round(row.memberShare * 100);
-  const casual = 100 - member;
+  const labels = rows.map(r => r.region);
+  const values = rows.map(r => r.revenueUSD);
 
   return {
     type: "doughnut",
     data: {
-      labels: ["Members (%)", "Casual (%)"],
-      datasets: [{ label: "Rider mix", data: [member, casual] }]
+      labels,
+      datasets: [{
+        label: `Revenue by region`,
+        data: values
+      }]
     },
     options: {
       plugins: {
-        title: { display: true, text: `Rider mix: ${title} (${year})` }
+        title: { display: true, text: `Revenue share by region: ${title} (${year})` }
       }
     }
   };
 }
+
 
 // RADAR — compare neighborhoods across multiple metrics for one year
 function radarCompareNeighborhoods(year) {
