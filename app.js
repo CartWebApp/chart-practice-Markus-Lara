@@ -47,11 +47,11 @@ function buildConfig(type, { year, title, metric }) {
   if (type === "line") return lineOverTime(title, ["unitsM", "revenueUSD"]);
   if (type === "scatter") return scatterScoreVsSales(title);
   if (type === "doughnut") return doughnutRevenueByRegion(year, title);
-  if (type === "radar") return radarCompareNeighbortitles(year);
+  if (type === "radar") return radarComparePublishers(year);
   return barByNeighbortitle(year, metric);
 }
 
-// Task A: BAR — compare neighbortitles for a given year
+// Task A: BAR — Shows sales by platform/genre
 function barByPlatform(year, metric) {
   console.log(year, metric)
   const rows = chartData.filter(r => r.year === Number(year));
@@ -83,7 +83,7 @@ function barByPlatform(year, metric) {
   };
 }
 
-// Task B: LINE — trend over time for one neighbortitle (2 datasets)
+// Task B: LINE — Shows sales over years
 function lineOverTime(title, metrics) {
   const rows = chartData
     .filter(r => r.title === title)
@@ -113,33 +113,34 @@ function lineOverTime(title, metrics) {
 }
 
 
-// SCATTER — relationship between temperature and trips
-function scatterTripsVsTemp(title) {
+// SCATTER — relationship between reviewScore and Sales
+function scatterScoreVsSales(title) {
   const rows = chartData.filter(r => r.title === title);
 
-  const points = rows.map(r => ({ x: r.tempC, y: r.trips }));
+  const points = rows.map(r => ({ x: r.reviewScore, y: r.revenueUSD }));
+  console.log(points)
 
   return {
     type: "scatter",
     data: {
       datasets: [{
-        label: `Trips vs Temp (${title})`,
+        label: `reviewScore vs revenueUSD (${title})`,
         data: points
       }]
     },
     options: {
       plugins: {
-        title: { display: true, text: `Does temperature affect trips? (${title})` }
+        title: { display: true, text: `Does reviewScore affect revenueUSD? (${title})` }
       },
       scales: {
-        x: { title: { display: true, text: "Temperature (C)" } },
-        y: { title: { display: true, text: "Trips" } }
+        x: { title: { display: true, text: "reviewScore" } },
+        y: { title: { display: true, text: "revenueUSD" } }
       }
     }
   };
 }
 
-// DOUGHNUT — member vs casual share for one title + year
+// DOUGHNUT — Shows revenue based by region
 function doughnutRevenueByRegion(year, title) {
   const rows = chartData.filter(
     r => r.year === Number(year) && r.title === title
@@ -166,15 +167,15 @@ function doughnutRevenueByRegion(year, title) {
 }
 
 
-// RADAR — compare neighborhoods across multiple metrics for one year
-function radarCompareNeighborhoods(year) {
+// RADAR — compares publishers across multiple metrics in a specific year
+function radarComparePublishers(year) {
   const rows = chartData.filter(r => r.year === year);
 
-  const metrics = ["genres", "revenueUSD", "avgDurationMin", "incidents"];
+  const metrics = ["unitsM", "revenueUSD", "priceUSD", "reviewScore"];
   const labels = metrics;
 
   const datasets = rows.map(r => ({
-    label: r.hood,
+    label: r.title,
     data: metrics.map(m => r[m])
   }));
 
