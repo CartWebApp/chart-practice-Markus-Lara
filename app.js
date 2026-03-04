@@ -169,14 +169,33 @@ function doughnutRevenueByRegion(year, title) {
 
 // RADAR — compares publishers across multiple metrics in a specific year
 function radarComparePublishers(year) {
-  const rows = chartData.filter(r => r.year === year);
+  const rows = chartData.filter(r => r.year === Number(year));
 
   const metrics = ["unitsM", "revenueUSD", "priceUSD", "reviewScore"];
   const labels = metrics;
 
-  const datasets = rows.map(r => ({
-    label: r.title,
-    data: metrics.map(m => r[m])
+  const statsByPublisher = new Map();
+
+  for (const row of rows) {
+    const pub = row.publisher;
+    if (!statsByPublisher.has(pub)) {
+      statsByPublisher.set(pub, { count: 0 });
+      for (const m of metrics) statsByPublisher.get(pub)[m] = 0;
+    }
+    const stats = statsByPublisher.get(pub);
+    stats.count += 1;
+    for (const m of metrics) stats[m] += row[m];
+  }
+
+  const sorted = [...statsByPublisher.entries()].sort(([, a], [, b]) => 
+    b.revenueUSD - a.revenueUSD
+  );
+
+  const top = sorted.slice(0, 3);
+
+  const datasets = top.map(([pub, stats]) => ({
+    label: pub,
+    data: metrics.map(m => stats[m])
   }));
 
   return {
@@ -184,7 +203,7 @@ function radarComparePublishers(year) {
     data: { labels, datasets },
     options: {
       plugins: {
-        title: { display: true, text: `Multi-metric comparison (${year})` }
+        title: { display: true, text: `Top publishers, multi-metric (${year})` }
       }
     }
   };
